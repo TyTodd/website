@@ -1,5 +1,6 @@
 import { getPosts } from "./get-posts";
 import PostsClient from "./PostsClient";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Posts",
@@ -43,7 +44,9 @@ export default async function PostsPage() {
   return (
     <div data-pagefind-ignore="all">
       <h1>{metadata.title}</h1>
-      <PostsClient posts={clientPosts} />
+      <Suspense fallback={<div />}>
+        <PostsClient posts={clientPosts} />
+      </Suspense>
     </div>
   );
 }
