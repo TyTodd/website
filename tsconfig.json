@@ -27,8 +27,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/projects/get-posts.js",
-    "src/app/projects/page.jsx",
+    "src/app/posts/get-posts.js",
+    "src/app/posts/page.jsx",
     "src/app/tags/[tag]/page.jsx"
   ],
   "exclude": ["node_modules"]

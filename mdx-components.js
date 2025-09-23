@@ -7,6 +7,7 @@ const themeComponents = getThemeComponents()
 export function useMDXComponents(components) {
   return {
     ...themeComponents,
+    YouTube: require('./src/components/YouTubeClient').default,
     ...components
   }
 }

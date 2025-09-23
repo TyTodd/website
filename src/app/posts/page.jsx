@@ -1,36 +1,49 @@
-import Link from 'next/link'
-import { PostCard } from 'nextra-theme-blog'
-import { getPosts, getTags } from './get-posts'
- 
+import { getPosts } from "./get-posts";
+import PostsClient from "./PostsClient";
+
 export const metadata = {
-  title: 'Posts'
-}
- 
+  title: "Posts",
+};
+
+/**
+ * Posts index listing with images from MDX front matter.
+ *
+ * Params:
+ * - none: Server component; loads posts and tags.
+ */
 export default async function PostsPage() {
-  const tags = await getTags()
-  const posts = await getPosts()
-  const allTags = Object.create(null)
- 
-  for (const tag of tags) {
-    allTags[tag] ??= 0
-    allTags[tag] += 1
-  }
+  const posts = await getPosts();
+  const clientPosts = posts.map((post) => {
+    const title = post.frontMatter.title ?? post.route;
+    const description = post.frontMatter.description;
+    const image = post.frontMatter.image;
+    let imageSrc;
+    if (typeof image === "string") {
+      const trimmed = image.trim();
+      if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("/")) {
+        imageSrc = trimmed;
+      } else {
+        imageSrc = `${post.route}/${trimmed.replace(/^\.??\//, "")}`;
+      }
+    } else {
+      imageSrc = undefined;
+    }
+    const tags = Array.isArray(post.frontMatter.tags)
+      ? post.frontMatter.tags
+      : [];
+    return {
+      title,
+      description,
+      imageSrc,
+      href: post.route,
+      tags,
+    };
+  });
+
   return (
     <div data-pagefind-ignore="all">
       <h1>{metadata.title}</h1>
-      <div
-        className="not-prose"
-        style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}
-      >
-        {Object.entries(allTags).map(([tag, count]) => (
-          <Link key={tag} href={`/tags/${tag}`} className="nextra-tag">
-            {tag} ({count})
-          </Link>
-        ))}
-      </div>
-      {posts.map(post => (
-        <PostCard key={post.route} post={post} />
-      ))}
+      <PostsClient posts={clientPosts} />
     </div>
-  )
+  );
 }

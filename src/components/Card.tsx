@@ -4,7 +4,7 @@ import NextImage from "next/image";
 export type CardProps = {
   /**
    * Short description: A simple, reusable card container.
-   * 
+   *
    * Params:
    * - children: ReactNode content to render inside the card.
    * - title: Optional title displayed at the top of the card.
@@ -22,18 +22,27 @@ export type CardProps = {
 /**
  * A presentational card container that can optionally display an image and title.
  * Adds hover animation when an href is provided.
- * 
+ *
  * Params:
  * - title: Optional heading shown above the body content.
  * - children: Body content of the card.
  * - imageSrc: Optional image URL to render at the top of the card.
  * - imageAlt: Accessible alternative text for the optional image.
  * - href: Optional URL to navigate to when clicked. External links open in a new tab.
- * 
+ *
  * Returns: A stylized, optionally clickable card element.
  */
-export default function Card({ title, children, imageSrc, imageAlt, href }: CardProps) {
+export default function Card({
+  title,
+  children,
+  imageSrc,
+  imageAlt,
+  href,
+}: CardProps) {
   const isExternal = href ? /^https?:\/\//i.test(href) : false;
+  const cardPadding = 12;
+  const cardMarginTop = 12;
+  const imageHeightPx = 160;
 
   const commonStyle: React.CSSProperties = {
     display: "block",
@@ -41,8 +50,8 @@ export default function Card({ title, children, imageSrc, imageAlt, href }: Card
     color: "inherit",
     border: "1px solid rgba(0,0,0,0.1)",
     borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
+    padding: cardPadding,
+    marginTop: cardMarginTop,
     background: "rgba(255,255,255,0.05)",
     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
     transition: "transform 150ms ease, box-shadow 150ms ease",
@@ -50,22 +59,57 @@ export default function Card({ title, children, imageSrc, imageAlt, href }: Card
     overflow: "hidden",
   };
 
+  const resolvedImageSrc = (() => {
+    if (!imageSrc) return undefined;
+    const trimmed = imageSrc.trim();
+    if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("/"))
+      return trimmed;
+    if (href) {
+      const base = href.replace(/\/+$/, "");
+      const rel = trimmed.replace(/^\.?\/+/, "");
+      return `${base}/${rel}`;
+    }
+    return `/${trimmed.replace(/^\.?\/+/, "")}`;
+  })();
+
   const inner = (
     <>
-      {imageSrc ? (
-        <div style={{ margin: -16, marginBottom: 12 }}>
+      {resolvedImageSrc ? (
+        <div
+          style={{
+            margin: -cardPadding,
+            marginBottom: 8,
+            position: "relative",
+            height: imageHeightPx,
+            overflow: "hidden",
+          }}
+        >
           <NextImage
-            src={imageSrc}
+            src={resolvedImageSrc}
             alt={imageAlt ?? ""}
-            width={800}
-            height={450}
-            style={{ width: "100%", height: "auto", display: "block" }}
+            fill
+            sizes="100vw"
+            style={{
+              objectFit: "cover",
+              width: "100%",
+              height: "100%",
+              display: "block",
+            }}
             priority={false}
           />
         </div>
       ) : null}
       {title ? (
-        <h2 style={{ margin: 0, marginBottom: 8, fontSize: 18 }}>{title}</h2>
+        <h2
+          style={{
+            margin: 0,
+            marginBottom: 6,
+            fontSize: 16,
+            fontWeight: "bold",
+          }}
+        >
+          {title}
+        </h2>
       ) : null}
       {children}
       <style>{`
@@ -97,5 +141,3 @@ export default function Card({ title, children, imageSrc, imageAlt, href }: Card
     </div>
   );
 }
-
-
