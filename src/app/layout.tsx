@@ -52,7 +52,7 @@ export default async function RootLayout({
               }
             >
               {/* <Search /> */}
-              <a href="/posts">Projects</a>
+              <a href="/posts?tags=project">Projects</a>
               <ThemeSwitch />
             </Navbar>
 
