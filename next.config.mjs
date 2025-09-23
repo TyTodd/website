@@ -20,8 +20,8 @@ export default withNextra({
   async redirects() {
     return [
       {
-        source: "/tags/:tag",
-        destination: "/posts?tags=:tag",
+        source: "/tags/:tag*",
+        destination: "/posts?tags=:tag*",
         permanent: true,
       },
     ];
