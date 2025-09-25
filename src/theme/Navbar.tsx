@@ -53,7 +53,7 @@ type NavbarProps = {
 // Base config for the liquid glass effect
 const BASE = {
   scale: -180,
-  radius: 14,
+  radius: 30,
   border: 0.07,
   lightness: 50,
   displace: 0.2,
