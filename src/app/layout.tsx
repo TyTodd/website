@@ -47,16 +47,23 @@ export default async function RootLayout({
                   href="/"
                   aria-label="Home"
                   style={{ display: "inline-flex", alignItems: "center" }}
+                  className="lgnav__chip"
                 >
                   <FaHouse size={18} />
                 </a>
               }
             >
               {/* <Search /> */}
-              <a key="projects-link" href="/posts?tags=project">
+              <a
+                key="projects-link"
+                href="/posts?tags=project"
+                className="lgnav__chip"
+              >
                 Projects
               </a>
-              <ThemeSwitch key="theme-switch" />
+              <span className="lgnav__chip">
+                <ThemeSwitch key="theme-switch" />
+              </span>
             </Navbar>
 
             {children}
