@@ -6,6 +6,7 @@ import { Children } from "react";
 import type { PageMapItem } from "nextra";
 import { Anchor } from "nextra/components";
 import { normalizePages } from "nextra/normalize-pages";
+import LiquidGlass from "liquid-glass-react";
 
 type NavbarProps = {
   /**

@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "liquid-glass-react": "^1.1.1",
     "next": "15.5.3",
     "next-themes": "0.4.6",
     "nextra": "^4.5.0",

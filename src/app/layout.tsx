@@ -43,6 +43,7 @@ export default async function RootLayout({
               pageMap={await getPageMap()}
               leftSlot={
                 <a
+                  key="home-link"
                   href="/"
                   aria-label="Home"
                   style={{ display: "inline-flex", alignItems: "center" }}
@@ -52,8 +53,10 @@ export default async function RootLayout({
               }
             >
               {/* <Search /> */}
-              <a href="/posts?tags=project">Projects</a>
-              <ThemeSwitch />
+              <a key="projects-link" href="/posts?tags=project">
+                Projects
+              </a>
+              <ThemeSwitch key="theme-switch" />
             </Navbar>
 
             {children}
