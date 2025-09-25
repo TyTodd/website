@@ -6,7 +6,7 @@ import { Children } from "react";
 import type { PageMapItem } from "nextra";
 import { Anchor } from "nextra/components";
 import { normalizePages } from "nextra/normalize-pages";
-import LiquidGlass from "liquid-glass-react";
+import LiquidGlass from "./LiquidGlass";
 
 type NavbarProps = {
   /**
@@ -56,23 +56,23 @@ const Navbar: FC<NavbarProps> = ({ pageMap, children, leftSlot }) => {
   })();
 
   return (
-    <nav
+    <LiquidGlass
+      className="not-prose"
+      borderRadius={12}
+      preset="free"
+      dockBoost={true}
+      icons={false}
+      saturation={1.5}
+      frost={0.05}
+      displace={0.2}
       style={{
         position: "sticky",
         top: 0,
         zIndex: 10,
-        backdropFilter: "saturate(180%) blur(12px)",
-        WebkitBackdropFilter: "saturate(180%) blur(12px)",
-        background: "color-mix(in oklab, #0ea5e9 14%, transparent)",
-        border: "1px solid color-mix(in oklab, canvasText 12%, transparent)",
-        borderRadius: 12,
-        boxShadow:
-          "0 2px 10px color-mix(in oklab, canvasText 10%, transparent)",
         maxWidth: 1360,
         margin: "8px auto 0",
         marginBottom: 20,
       }}
-      className="not-prose"
     >
       <div
         style={{
@@ -108,7 +108,7 @@ const Navbar: FC<NavbarProps> = ({ pageMap, children, leftSlot }) => {
           {normalizedChildren}
         </div>
       </div>
-    </nav>
+    </LiquidGlass>
   );
 };
 
