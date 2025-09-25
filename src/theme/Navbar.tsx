@@ -43,6 +43,11 @@ type NavbarProps = {
   saturation?: number;
   brightness?: number;
   frost?: number;
+
+  // Animation props
+  animationDuration?: number;
+  animationDelay?: number;
+  disableAnimation?: boolean;
 };
 
 // Base config for the liquid glass effect
@@ -58,11 +63,11 @@ const BASE = {
   alpha: 0.93,
   blur: 11,
   r: 0,
-  g: 30,
+  g: 10,
   b: 20,
   saturation: 1.5,
   brightness: 1.1,
-  frost: 0.4,
+  frost: 0.3,
 };
 
 const PRESETS = {
@@ -99,12 +104,12 @@ const Navbar: FC<NavbarProps> = ({
   saturation,
   brightness,
   frost,
+  // Animation props
+  animationDuration = 1.2,
+  animationDelay = 0.1,
+  disableAnimation = false,
 }) => {
   const pathname = usePathname();
-  const [isEffectReady, setIsEffectReady] = useState(false);
-  const effectInitialized = useRef(false);
-  const navbarRef = useRef<HTMLElement>(null);
-
   const { topLevelNavbarItems } = normalizePages({
     list: pageMap,
     route: pathname,
@@ -199,7 +204,12 @@ const Navbar: FC<NavbarProps> = ({
     return `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
   }, [config]);
 
-  // Initialize liquid glass effect and handle fade-in
+  // Ref to track if effect is already initialized
+  const effectInitialized = useRef(false);
+  const navbarRef = useRef<HTMLElement>(null);
+  const [isEffectReady, setIsEffectReady] = useState(false);
+
+  // Initialize liquid glass effect and entrance animation
   useEffect(() => {
     if (effectInitialized.current) return;
     effectInitialized.current = true;
@@ -207,9 +217,29 @@ const Navbar: FC<NavbarProps> = ({
     const root = document.documentElement;
     root.dataset.theme = String(theme);
 
-    // Start with navbar hidden
-    if (navbarRef.current) {
-      gsap.set(navbarRef.current, { y: -20 });
+    // Set initial animation state if not disabled
+    if (!disableAnimation && navbarRef.current) {
+      gsap.set(navbarRef.current, {
+        opacity: 0,
+        y: -20,
+        scale: 0.95,
+      });
+
+      // Set initial state for nav items
+      gsap.set(".lgnav__nav-link", {
+        opacity: 0,
+        y: -10,
+      });
+
+      gsap.set(".lgnav__left-slot > *", {
+        opacity: 0,
+        x: -15,
+      });
+
+      gsap.set(".lgnav__right-slot > *", {
+        opacity: 0,
+        x: 15,
+      });
     }
 
     // Build displacement image SVG and feed it to <feImage/>
@@ -217,7 +247,7 @@ const Navbar: FC<NavbarProps> = ({
       const debugEl = document.querySelector(".lgnav__displacement-debug");
       if (!debugEl) {
         // Retry after a short delay if element not found
-        setTimeout(initializeEffect, 50);
+        setTimeout(initializeEffect, 100);
         return;
       }
 
@@ -294,24 +324,65 @@ const Navbar: FC<NavbarProps> = ({
         attr: { stdDeviation: config.displace },
       });
 
-      // Effect is ready, trigger fade-in
+      // Start entrance animation after effect is initialized
+      if (!disableAnimation && navbarRef.current) {
+        const tl = gsap.timeline({ delay: animationDelay });
+
+        // Main navbar entrance
+        tl.to(navbarRef.current, {
+          duration: animationDuration * 0.6,
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          ease: "back.out(1.2)",
+        });
+
+        // Left slot items
+        tl.to(
+          ".lgnav__left-slot > *",
+          {
+            duration: animationDuration * 0.4,
+            opacity: 1,
+            x: 0,
+            ease: "power2.out",
+            stagger: 0.1,
+          },
+          "-=0.4"
+        );
+
+        // Nav links with stagger
+        tl.to(
+          ".lgnav__nav-link",
+          {
+            duration: animationDuration * 0.4,
+            opacity: 1,
+            y: 0,
+            ease: "power2.out",
+            stagger: 0.1,
+          },
+          "-=0.3"
+        );
+
+        // Right slot items
+        tl.to(
+          ".lgnav__right-slot > *",
+          {
+            duration: animationDuration * 0.4,
+            opacity: 1,
+            x: 0,
+            ease: "power2.out",
+            stagger: 0.1,
+          },
+          "-=0.4"
+        );
+      }
+
+      // Mark effect as ready
       setIsEffectReady(true);
     };
 
     initializeEffect();
   }, []); // Empty dependency array - only run once on mount
-
-  // Handle the fade-in animation when effect is ready
-  useEffect(() => {
-    if (isEffectReady && navbarRef.current) {
-      gsap.to(navbarRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power2.out",
-      });
-    }
-  }, [isEffectReady]);
 
   const uniqueNavItems = (() => {
     const seenRoutes = new Set<string>();
@@ -340,7 +411,6 @@ const Navbar: FC<NavbarProps> = ({
         margin: "0 auto",
         marginBottom: 16,
         padding: 0,
-        opacity: 0, // Start hidden, will be animated by GSAP
       }}
       className="not-prose lgnav__navbar"
     >
@@ -358,7 +428,7 @@ const Navbar: FC<NavbarProps> = ({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {leftSlot}
+            <div className="lgnav__left-slot">{leftSlot}</div>
             <ul
               style={{
                 display: "flex",
@@ -387,7 +457,10 @@ const Navbar: FC<NavbarProps> = ({
               ))}
             </ul>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 12 }}
+            className="lgnav__right-slot"
+          >
             {normalizedChildren}
           </div>
         </div>
@@ -461,7 +534,7 @@ const Navbar: FC<NavbarProps> = ({
           </defs>
         </svg>
 
-        {/* Displacement debug element - now always present but hidden */}
+        {/* Displacement debug element */}
         <div className="lgnav__displacement-debug"></div>
       </div>
 
@@ -524,7 +597,6 @@ const Navbar: FC<NavbarProps> = ({
           opacity: 1 !important;
           transform: translateY(-1px);
         }
-
         .lgnav__chip {
           display: inline-flex;
           align-items: center;
@@ -594,6 +666,21 @@ const Navbar: FC<NavbarProps> = ({
 
           .lgnav__effect ul {
             gap: 16px !important;
+          }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+          .lgnav__navbar {
+            opacity: 1 !important;
+            transform: none !important;
+          }
+
+          .lgnav__nav-link,
+          .lgnav__left-slot > *,
+          .lgnav__right-slot > * {
+            opacity: 1 !important;
+            transform: none !important;
           }
         }
       `}</style>
