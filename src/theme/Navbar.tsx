@@ -62,7 +62,7 @@ const BASE = {
   b: 20,
   saturation: 1.5,
   brightness: 1.1,
-  frost: 0.5,
+  frost: 0.4,
 };
 
 const PRESETS = {
