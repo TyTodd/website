@@ -53,7 +53,7 @@ type NavbarProps = {
 // Base config for the liquid glass effect
 const BASE = {
   scale: -180,
-  radius: 30,
+  radius: 10,
   border: 0.07,
   lightness: 50,
   displace: 0.2,
@@ -65,13 +65,13 @@ const BASE = {
   r: 0,
   g: 10,
   b: 20,
-  saturation: 1.5,
-  brightness: 1.1,
-  frost: 0.3,
+  saturation: 1,
+  brightness: 1,
+  frost: 0,
 };
 
 const PRESETS = {
-  navbar: { ...BASE, width: 920, height: 56 },
+  navbar: { ...BASE, width: 920, height: 80 },
   compact: { ...BASE, width: 800, height: 48, radius: 24 },
   pill: { ...BASE, width: 600, height: 40, radius: 20 },
 };
@@ -120,6 +120,7 @@ const Navbar: FC<NavbarProps> = ({
   // Resolve final config from preset + explicit props
   const config = useMemo(() => {
     const p = PRESETS[preset] || PRESETS.navbar;
+    const rawAlpha = alpha ?? p.alpha;
     return {
       ...p,
       width: width ?? p.width,
@@ -127,7 +128,7 @@ const Navbar: FC<NavbarProps> = ({
       radius: radius ?? p.radius,
       border: border ?? p.border,
       lightness: lightness ?? p.lightness,
-      alpha: alpha ?? p.alpha,
+      alpha: rawAlpha > 0 ? rawAlpha : p.alpha,
       blur: inputBlur ?? p.blur,
       displace: displace ?? p.displace,
       scale: scale ?? p.scale,
@@ -169,8 +170,8 @@ const Navbar: FC<NavbarProps> = ({
       Math.min(config.width, config.height) * (config.border * 0.5);
     const svgContent = `
       <svg viewBox="0 0 ${config.width} ${
-      config.height
-    }" xmlns="http://www.w3.org/2000/svg">
+        config.height
+      }" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="lgnav-red" x1="100%" y1="0%" x2="0%" y2="0%">
             <stop offset="0%" stop-color="#000"/>
@@ -182,23 +183,23 @@ const Navbar: FC<NavbarProps> = ({
           </linearGradient>
         </defs>
         <rect x="0" y="0" width="${config.width}" height="${
-      config.height
-    }" fill="black" />
+          config.height
+        }" fill="black" />
         <rect x="0" y="0" width="${config.width}" height="${
-      config.height
-    }" rx="${config.radius}" fill="url(#lgnav-red)" />
+          config.height
+        }" rx="${config.radius}" fill="url(#lgnav-red)" />
         <rect x="0" y="0" width="${config.width}" height="${
-      config.height
-    }" rx="${config.radius}" fill="url(#lgnav-blue)" style="mix-blend-mode: ${
-      config.blend
-    }" />
+          config.height
+        }" rx="${config.radius}" fill="url(#lgnav-blue)" style="mix-blend-mode: ${
+          config.blend
+        }" />
         <rect x="${borderPx}" y="${
-      Math.min(config.width, config.height) * (config.border * 0.5)
-    }" width="${config.width - borderPx * 2}" height="${
-      config.height - borderPx * 2
-    }" rx="${config.radius}" fill="hsl(0 0% ${config.lightness}% / ${
-      config.alpha
-    })" style="filter:blur(${config.blur}px)" />
+          Math.min(config.width, config.height) * (config.border * 0.5)
+        }" width="${config.width - borderPx * 2}" height="${
+          config.height - borderPx * 2
+        }" rx="${config.radius}" fill="hsl(0 0% ${config.lightness}% / ${
+          config.alpha
+        })" style="filter:blur(${config.blur}px)" />
       </svg>`;
 
     return `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
@@ -255,8 +256,8 @@ const Navbar: FC<NavbarProps> = ({
         Math.min(config.width, config.height) * (config.border * 0.5);
       const kids = `
         <svg class="lgnav__displacement-image" viewBox="0 0 ${config.width} ${
-        config.height
-      }" xmlns="http://www.w3.org/2000/svg">
+          config.height
+        }" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lgnav-red" x1="100%" y1="0%" x2="0%" y2="0%">
               <stop offset="0%" stop-color="#000"/>
@@ -268,23 +269,23 @@ const Navbar: FC<NavbarProps> = ({
             </linearGradient>
           </defs>
           <rect x="0" y="0" width="${config.width}" height="${
-        config.height
-      }" fill="black" />
+            config.height
+          }" fill="black" />
           <rect x="0" y="0" width="${config.width}" height="${
-        config.height
-      }" rx="${config.radius}" fill="url(#lgnav-red)" />
+            config.height
+          }" rx="${config.radius}" fill="url(#lgnav-red)" />
           <rect x="0" y="0" width="${config.width}" height="${
-        config.height
-      }" rx="${config.radius}" fill="url(#lgnav-blue)" style="mix-blend-mode: ${
-        config.blend
-      }" />
+            config.height
+          }" rx="${config.radius}" fill="url(#lgnav-blue)" style="mix-blend-mode: ${
+            config.blend
+          }" />
           <rect x="${borderPx}" y="${
-        Math.min(config.width, config.height) * (config.border * 0.5)
-      }" width="${config.width - borderPx * 2}" height="${
-        config.height - borderPx * 2
-      }" rx="${config.radius}" fill="hsl(0 0% ${config.lightness}% / ${
-        config.alpha
-      })" style="filter:blur(${config.blur}px)" />
+            Math.min(config.width, config.height) * (config.border * 0.5)
+          }" width="${config.width - borderPx * 2}" height="${
+            config.height - borderPx * 2
+          }" rx="${config.radius}" fill="hsl(0 0% ${config.lightness}% / ${
+            config.alpha
+          })" style="filter:blur(${config.blur}px)" />
         </svg>`;
 
       debugEl.innerHTML = kids;
@@ -347,7 +348,7 @@ const Navbar: FC<NavbarProps> = ({
             ease: "power2.out",
             stagger: 0.1,
           },
-          "-=0.4"
+          "-=0.4",
         );
 
         // Nav links with stagger
@@ -360,7 +361,7 @@ const Navbar: FC<NavbarProps> = ({
             ease: "power2.out",
             stagger: 0.1,
           },
-          "-=0.3"
+          "-=0.3",
         );
 
         // Right slot items
@@ -373,7 +374,7 @@ const Navbar: FC<NavbarProps> = ({
             ease: "power2.out",
             stagger: 0.1,
           },
-          "-=0.4"
+          "-=0.4",
         );
       }
 
@@ -575,22 +576,19 @@ const Navbar: FC<NavbarProps> = ({
           backdrop-filter: url(#lgnav-filter)
             brightness(var(--lgnav-brightness))
             saturate(var(--lgnav-saturation));
-          box-shadow: 0 0 2px 1px
-              light-dark(
-                color-mix(in oklch, canvasText, transparent 85%),
-                color-mix(in oklch, canvasText, transparent 65%)
-              )
-              inset,
-            0 0 10px 4px
-              light-dark(
-                color-mix(in oklch, canvasText, transparent 90%),
-                color-mix(in oklch, canvasText, transparent 85%)
-              )
-              inset,
-            0px 4px 16px rgba(17, 17, 26, 0.05),
-            0px 8px 24px rgba(17, 17, 26, 0.05),
-            0px 16px 56px rgba(17, 17, 26, 0.05);
           transition: all 0.3s ease;
+        }
+
+        .lgnav__effect::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 4px;
+          height: 3px;
+          background: color-mix(in oklch, canvasText, transparent 80%);
+          pointer-events: none;
+          z-index: 3;
         }
 
         .lgnav__nav-link:hover {

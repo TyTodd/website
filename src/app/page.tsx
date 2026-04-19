@@ -68,15 +68,12 @@ export default function Home(): ReactElement {
       </ul>
       <h2 style={{ marginTop: 16 }}>About me</h2>
       <p style={{ marginTop: 8 }}>
-        I’m Tyrin-Ian Todd, a maker, engineer, and entrepreneur driven by a
-        passion for building systems that expand the boundaries of intelligence
-        and creativity. At MIT, where I studied Course 6-4 (AI & Decision
-        Making), I’ve worked on projects ranging from autonomous machines to AI
-        models. I founded Modaic 🐙, a platform for packaging and sharing
-        self-improving AI agents, where I’m exploring how intelligence can be
-        designed, scaled, and remixed like code. Beyond the projects, I’m
-        chasing the thrill of building things that feel impossible, until
-        they’re suddenly real.
+        Hey I&apos;m Tyrin. Welcome to my realm. Little bit about me. I studied
+        AI+CS at MIT (course 6-4 for fellow beavers) and left the MEng program to
+        build Modaic 🐙 the verification and alignment layer for AI decisions.
+        This website is my virtual tech journal, a log of all my past endeavors
+        in robotics, video games, web design, and AI. I also recently picked up
+        some blog writing. Enjoy
       </p>
 
       <style>{`
