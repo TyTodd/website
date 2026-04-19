@@ -10,18 +10,37 @@ image: /thumbnails/2s007.jpg
 description: MIT 2.S007 semi-autonomous robot that won 3rd place in a class wide competition.
 ---
 
+I made this blog for my girlfriend, the most cracked engineer at Google who happens not to have a Twitter account. I recently got her to start using AI coding tools but I want her to know theres more to it than just having Gemini fix your bugs. So I made this guide, the 4 levels of AI Coding. Documenting the transition I've made since spring of last year of adopting coding tools. Disclaimer I identify as a Level 2 AI coder myself (and thats where I'm comfortable) however, I do recognize there is a level above that and didn't want to leave it out for all the gstackers and super vibe coders out there. 
+
 ## Level 0: Pair Programming
-Your role: Engineer
+Your Role: Engineer
 AI Role: Intern
 
+We start with Pair Programming. This is the level most everyone who knows how to actually code starts at. You've heard about the benefits of AI programming but theres no way you're letting this new technology lay a token on your precious codebase without heavy review. You'll start by letting it implement a function or two. You look at the results, your whole career you prided yourself on clean, readable, terse code, and this is just not your style. You meticoulously look through every line of code, double-triple checking the AI has accounted for all edge cases and hasn't made any silly mistakes. You'll irritably change a few lines here and there because you don't "agree with" the way the agent chose to implement it. Your implementation is cleaner and handles edge cases better. The more you use the AI the more you start to trust it and you gradually allow it to implement more stuff without supervision. You start to copy API docs and PRD's into its context window to see how it handles them. You press compile or run and to your surpise it works on the first try. After one shotting a few more tasks you start to trust the AI and stop feeling the need to micromanage every line of code. Conratulations, you've made it to vibe coding.
+
 ## Level 1: Vibe Coding
-Your role: Senior Engineer
+Your Role: Senior Engineer
 AI role: Junior Engineer
+The transition to vibe coding is mostly driven by one realization: the difference between human error and agent error. Human error are the silly mistakes we make as forgetful humans. You assume the wrong API for a library, you make a syntax error, you don't remember to handle a specific code path, you assume a function works in a completely different way. During the pair programming phase these were the kinds of things you were checking for, human errors. The thing is agents are not very forgetful at this point they are great at following instructions and remembering things in the context window so they don't make human errors, they make agent errors. Agent errors have everything to do with context. When agents don't have enough context about things they make assumptions and mess up. Vibe coding requires you to think about your problems in depth. You must break them down in detail to give the agent as much context as possible. You learn that instead of looking over the agents code you can just define unit tests and metrics of success and tell the agent to automatically check against that to iterate on its code. You learn to watch the agent's trajectories so you can recognize when it is going down the wrong path. You notice patterns in common assumptions and mistakes the agent makes and start to include mitigations in your prompts. You explicitly tell the agent about code conventions and anti-patterns, you include instructions for how to run tests, how to troubleshoot issues, how to use specific infratructure. After a while this becomes monotomous as you find yourself entering in the exact stuff into your prompts each time. You wonder if there's a way to automate it. There is! It's called *Context Engineering*
 
 ## Level 2: Context Engineering
-Your role: Manager
+Your Role: Manager
 AI Role: Senior Engineer
 
+In this level you you learn to start giving the agent automated access to the context it needs when it needs it. There are 3 main mechanisms you can use to do this CLAUDE.md/AGENTS.md, Skills, and MCPs. Most people use the kitchen analogy where the agent is a chef.
+
+### AGENTS.md/CLAUDE.md - Employee Handbook 
+These files contain breif notes you want your agent to always remember about specific parts of your code base. The root AGENTS.md/CLAUDE.md is usually loaded into your agent's system prompt during initialization and contaisn the rules, conventions, and repo specifc knowledge most important for understanding how to use and modify your code base. You can also put a AGENTS.md/CLAUDE.md in subfolders to summarize subparts of your code base.
+
+### Skills - Recipes
+Skills are essenially reusable prompts that can be either manually invoked using '/' or automatcally invoked by the agent when needed. They contain specific instructions for how to do repeatble tasks within the code base. Those prompts you manually copied each time you want to write new tests, troubleshoot an issue, create documentation you can make a skill for each one. As you run your agent and see where it commonly makes mistakes you can update your skills to get the agent to avoid those common pitfalls. 
+
+### MCPs/CLIs - Equipment
+MCPs and CLIs allow your agent to interact with its environment. The agent can use them to get more context about its tasks. Do things like look up documentation on a library, read datasets on huggingface, and see PRs on github. 
+
+The key to context engineering is that its iterative. Don't expect to build the perfect setup on the first try. They key is to try and observe. As you use the agent more you'll start to notice where it goes wrong and create fixes accordingly.
+
+
 ## Level 3: Agent Orchestration
-Your role: Director
-AI Role: Engineering Team
+Your Role: Director
+AI Role: Dev Team

@@ -43,9 +43,8 @@ export default async function PostsPage() {
 
   return (
     <div data-pagefind-ignore="all">
-      <h1>{metadata.title}</h1>
       <Suspense fallback={<div />}>
-        <PostsClient posts={clientPosts} />
+        <PostsClient posts={clientPosts} pageTitle={metadata.title} />
       </Suspense>
     </div>
   );

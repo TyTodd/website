@@ -1,11 +1,13 @@
-import { Footer, Layout, ThemeSwitch } from "nextra-theme-blog";
+import { Footer, Layout } from "nextra-theme-blog";
 import { Banner, Head, Search } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import "nextra-theme-blog/style.css";
+import "./globals.css";
 import type { ReactElement, ReactNode } from "react";
 import Navbar from "@/theme/Navbar";
 import { FaHouse } from "react-icons/fa6";
-import { ThemeProvider } from "next-themes";
+import { NavButton } from "@/components/NavButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata = {
   title: "Tyrin",
@@ -27,56 +29,43 @@ export default async function RootLayout({
 }): Promise<ReactElement> {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Head backgroundColor={{ dark: "#0f172a", light: "#fefce8" }} />
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Layout>
-            <style>{`
-            :root {
-              --container-max: 1360px;
-              --prose-max-ch: 82ch;
-            }
-            main { max-width: var(--container-max); margin-inline: auto; }
-            article, .prose { max-width: var(--prose-max-ch); }
-          `}</style>
+      <Head />
+      <body className="bg-background text-foreground">
+        <Layout
+          nextThemes={{
+            attribute: ["class", "data-theme"],
+            defaultTheme: "system",
+            enableSystem: true,
+          }}
+          banner={
             <Navbar
               pageMap={await getPageMap()}
               leftSlot={
-                <a
-                  key="home-link"
-                  href="/"
-                  aria-label="Home"
-                  style={{ display: "inline-flex", alignItems: "center" }}
-                  className="lgnav__chip"
-                >
+                <NavButton key="home-link" href="/" ariaLabel="Home" isIconOnly>
                   <FaHouse size={18} />
-                </a>
+                </NavButton>
               }
             >
-              {/* <Search /> */}
-              <a
-                key="projects-link"
-                href="/posts?tags=project"
-                className="lgnav__chip"
-              >
-                Projects
-              </a>
-              <span className="lgnav__chip">
-                <ThemeSwitch key="theme-switch" />
-              </span>
+              <NavButton key="blog-link" href="/posts">
+                Blog
+              </NavButton>
+              <ThemeToggle key="theme-toggle" />
             </Navbar>
+          }
+        >
+          <style>{`
+            article, .x\\:prose { max-width: 82ch; }
+          `}</style>
+          {children}
 
-            {children}
-
-            <Footer>
-              <abbr
-                title="This site and all its content are licensed under a Creative Commons Attribution-NonCommercial 4.0 International License."
-                style={{ cursor: "help" }}
-              ></abbr>{" "}
-              {new Date().getFullYear()} © Tyrin Todd.
-            </Footer>
-          </Layout>
-        </ThemeProvider>
+          <Footer>
+            <abbr
+              title="This site and all its content are licensed under a Creative Commons Attribution-NonCommercial 4.0 International License."
+              style={{ cursor: "help" }}
+            ></abbr>{" "}
+            {new Date().getFullYear()} © Tyrin Todd.
+          </Footer>
+        </Layout>
       </body>
     </html>
   );

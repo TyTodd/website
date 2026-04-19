@@ -8,6 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.3",
+    "@heroui/styles": "^3.0.3",
+    "@react-types/shared": "^3.34.0",
     "gsap": "^3.13.0",
     "liquid-glass-react": "^1.1.1",
     "lucide-react": "^0.544.0",

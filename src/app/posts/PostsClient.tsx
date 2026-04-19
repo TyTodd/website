@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  Chip,
+  EmptyState,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@heroui/react";
+import type { Key, Selection } from "@react-types/shared";
 import Card from "@/components/Card";
+import { TagTypeIcon } from "@/components/TagTypeIcon";
+
+const PROJECT_TAG = "project";
 
 export type FilterablePost = {
-  /**
-   * Short description: Shape of a post item used by the client filter UI.
-   *
-   * Params:
-   * - title: Display title for the post.
-   * - description: Optional short description for the post.
-   * - imageSrc: Optional image URL for the post.
-   * - href: Route to navigate to for the post.
-   * - tags: List of tag strings associated with the post.
-   */
   title: string;
   description?: string;
   imageSrc?: string;
@@ -22,102 +22,174 @@ export type FilterablePost = {
   tags: string[];
 };
 
+type PostsView = "blog" | "projects";
+
 type PostsClientProps = {
-  /**
-   * Short description: Interactive filter and grid renderer for posts.
-   *
-   * Params:
-   * - posts: Array of filterable post items to render.
-   */
   posts: FilterablePost[];
+  pageTitle: string;
 };
 
-/**
- * Renders tag filter buttons and a responsive grid of posts.
- * - Grid: 1 column on mobile, 3 columns on desktop.
- * - Filters: Multi-select; selected state reflected in the URL query `tags`.
- *
- * Params:
- * - posts: Array of filterable post items to render.
- */
-export default function PostsClient({ posts }: PostsClientProps) {
+function parseTagsParam(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((t) => decodeURIComponent(t.trim()))
+    .filter(Boolean)
+    .filter((t) => t !== PROJECT_TAG);
+}
+
+function parseView(sp: URLSearchParams): PostsView {
+  const v = sp.get("view");
+  if (v === "blog") return "blog";
+  return "projects";
+}
+
+function postMatchesView(post: FilterablePost, view: PostsView): boolean {
+  const hasProject = (post.tags ?? []).includes(PROJECT_TAG);
+  return view === "projects" ? hasProject : !hasProject;
+}
+
+export default function PostsClient({ posts, pageTitle }: PostsClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const migratedLegacy = useRef(false);
+
+  const view = useMemo(() => parseView(searchParams), [searchParams]);
+
+  const basePosts = useMemo(
+    () => posts.filter((p) => postMatchesView(p, view)),
+    [posts, view]
+  );
 
   const allTags = useMemo(() => {
-    const tagCount: Record<string, number> = Object.create(null);
-    for (const post of posts) {
+    const counts: Record<string, number> = Object.create(null);
+    for (const post of basePosts) {
       for (const tag of post.tags ?? []) {
-        tagCount[tag] ??= 0;
-        tagCount[tag] += 1;
+        if (tag === PROJECT_TAG) continue;
+        counts[tag] ??= 0;
+        counts[tag] += 1;
       }
     }
-    return tagCount;
-  }, [posts]);
+    return counts;
+  }, [basePosts]);
 
-  const initialSelected = useMemo(() => {
-    const param = searchParams.get("tags");
-    if (!param) return new Set<string>();
-    return new Set(
-      param
-        .split(",")
-        .map((t) => decodeURIComponent(t))
-        .filter(Boolean)
-    );
-  }, [searchParams]);
-
-  const [selectedTags, setSelectedTags] =
-    useState<Set<string>>(initialSelected);
+  const selectedTags = useMemo(() => {
+    const fromUrl = parseTagsParam(searchParams.get("tags"));
+    return new Set(fromUrl.filter((t) => allTags[t] !== undefined));
+  }, [searchParams, allTags]);
 
   useEffect(() => {
-    // Sync state if URL changes externally (e.g., back/forward navigation)
-    const param = searchParams.get("tags");
-    const next = new Set<string>(
-      (param ? param.split(",") : [])
-        .map((t) => decodeURIComponent(t))
-        .filter(Boolean)
-    );
-    setSelectedTags(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+    if (migratedLegacy.current) return;
+    const raw = searchParams.get("tags");
+    if (!raw) return;
+    const parts = raw
+      .split(",")
+      .map((t) => decodeURIComponent(t.trim()))
+      .filter(Boolean);
+    const nonProject = parts.filter((t) => t !== PROJECT_TAG);
+    const onlyProject = parts.length > 0 && nonProject.length === 0;
+    if (!onlyProject) return;
 
-  const toggleTag = (tag: string) => {
-    const next = new Set(selectedTags);
-    if (next.has(tag)) next.delete(tag);
-    else next.add(tag);
-    setSelectedTags(next);
+    migratedLegacy.current = true;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("tags");
+    const q = next.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    const fromUrl = parseTagsParam(searchParams.get("tags"));
+    const valid = fromUrl.filter((t) => allTags[t] !== undefined);
+    if (valid.length === fromUrl.length) return;
 
     const params = new URLSearchParams(searchParams.toString());
-    if (next.size === 0) {
-      params.delete("tags");
-    } else {
+    if (valid.length === 0) params.delete("tags");
+    else
       params.set(
         "tags",
-        Array.from(next)
-          .map((t) => encodeURIComponent(t))
-          .join(",")
+        valid.map((t) => encodeURIComponent(t)).join(",")
       );
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [allTags, pathname, router, searchParams]);
+
+  const setView = (next: PostsView) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "blog") params.set("view", "blog");
+    else params.delete("view");
+
+    const nextBase = posts.filter((p) => postMatchesView(p, next));
+    const allowed = new Set<string>();
+    for (const post of nextBase) {
+      for (const tag of post.tags ?? []) {
+        if (tag !== PROJECT_TAG) allowed.add(tag);
+      }
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const fromUrl = parseTagsParam(params.get("tags"));
+    const kept = fromUrl.filter((t) => allowed.has(t));
+    if (kept.length === 0) params.delete("tags");
+    else
+      params.set(
+        "tags",
+        kept.map((t) => encodeURIComponent(t)).join(",")
+      );
+
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  };
+
+  const onViewSelectionChange = (keys: Selection) => {
+    if (keys === "all") return;
+    const first = keys.values().next().value;
+    if (first === "blog") setView("blog");
+    else if (first === "projects") setView("projects");
+  };
+
+  const toggleTag = (tag: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = new Set(parseTagsParam(params.get("tags")));
+    if (current.has(tag)) current.delete(tag);
+    else current.add(tag);
+    if (current.size === 0) params.delete("tags");
+    else
+      params.set(
+        "tags",
+        [...current].map((t) => encodeURIComponent(t)).join(",")
+      );
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   };
 
   const filteredPosts = useMemo(() => {
-    if (selectedTags.size === 0) return posts;
-    return posts.filter((post) => post.tags?.some((t) => selectedTags.has(t)));
-  }, [posts, selectedTags]);
+    if (selectedTags.size === 0) return basePosts;
+    return basePosts.filter((post) =>
+      post.tags?.some((t) => selectedTags.has(t))
+    );
+  }, [basePosts, selectedTags]);
+
+  const viewKeys = useMemo(() => new Set<Key>([view]), [view]);
 
   return (
-    <div>
-      <div
-        className="not-prose"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: ".5rem",
-          marginBottom: "1rem",
-        }}
-      >
+    <div className="not-prose">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="m-0 text-2xl font-semibold tracking-tight">
+          {pageTitle}
+        </h1>
+        <ToggleButtonGroup
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={viewKeys}
+          onSelectionChange={onViewSelectionChange}
+          size="sm"
+          className="shrink-0"
+        >
+          <ToggleButton id="blog">Blog</ToggleButton>
+          <ToggleButton id="projects">Projects</ToggleButton>
+        </ToggleButtonGroup>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
         {Object.entries(allTags).map(([tag, count]) => {
           const isSelected = selectedTags.has(tag);
           return (
@@ -125,17 +197,19 @@ export default function PostsClient({ posts }: PostsClientProps) {
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
-              className="nextra-tag !bg-transparent !bg-none border border-black/15 dark:border-white/15 shadow-[0_6px_16px_rgba(0,0,0,0.18)] dark:shadow-[0_6px_16px_rgba(255,255,255,0.18)]"
-              style={{
-                ...(isSelected
-                  ? {
-                      background: "rgba(59,130,246,0.12)",
-                      color: "rgb(37,99,235)",
-                    }
-                  : {}),
-              }}
+              className="cursor-pointer rounded-full border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
-              {tag} ({count})
+              <Chip
+                color={isSelected ? "accent" : "default"}
+                size="sm"
+                variant={isSelected ? "primary" : "secondary"}
+                className="gap-1"
+              >
+                <TagTypeIcon tag={tag} />
+                <Chip.Label>
+                  {tag} ({count})
+                </Chip.Label>
+              </Chip>
             </button>
           );
         })}
@@ -145,21 +219,41 @@ export default function PostsClient({ posts }: PostsClientProps) {
         .postsGrid { display: grid; gap: 16px; grid-template-columns: 1fr; }
         @media (min-width: 1024px) { .postsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
       `}</style>
-      <div className="not-prose postsGrid">
-        {filteredPosts.map((post) => (
-          <Card
-            key={post.href}
-            title={post.title}
-            imageSrc={post.imageSrc}
-            imageAlt={post.title}
-            href={post.href}
-          >
-            {post.description ? (
-              <p style={{ margin: 0 }}>{post.description}</p>
-            ) : null}
-          </Card>
-        ))}
-      </div>
+
+      {basePosts.length === 0 ? (
+        <EmptyState className="rounded-2xl border border-dashed border-black/20 py-12 text-center dark:border-white/20">
+          <p className="m-0 text-base font-medium text-foreground">
+            {view === "blog"
+              ? "Blog posts coming soon!"
+              : "No project posts match this view."}
+          </p>
+          {view === "projects" && (
+            <p className="m-0 mt-2">
+              Posts with the “project” tag appear in Projects.
+            </p>
+          )}
+        </EmptyState>
+      ) : filteredPosts.length === 0 ? (
+        <EmptyState className="rounded-2xl border border-dashed border-black/20 py-10 text-center dark:border-white/20">
+          No posts match the selected tags.
+        </EmptyState>
+      ) : (
+        <div className="postsGrid">
+          {filteredPosts.map((post) => (
+            <Card
+              key={post.href}
+              title={post.title}
+              imageSrc={post.imageSrc}
+              imageAlt={post.title}
+              href={post.href}
+            >
+              {post.description ? (
+                <p className="m-0">{post.description}</p>
+              ) : null}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
